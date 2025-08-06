@@ -1,0 +1,62 @@
+import {ref} from "vue";
+import type {PlacedObject} from "./types.ts";
+
+export class Session {
+    static placedTiles = ref<PlacedObject[]>([])
+
+    static save(): void {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(this.toJSON());
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href",     dataStr);
+        downloadAnchorNode.setAttribute("download", "map.json");
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    static async load(): Promise<boolean> {
+        return new Promise((resolve) => {
+//Open file
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.addEventListener("change", (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                console.log('Selected file:', file);
+                if (!file) return;
+                const reader = new FileReader();
+                console.log('Reading file:', file);
+                reader.onload = (e) => {
+                    const text = e.target?.result as string;
+                    try {
+                        const data = JSON.parse(text);
+                        console.log('Loaded data:', data);
+                        if (data.placedTiles) {
+                            console.log('Loaded placedTiles:', data.placedTiles);
+                            Session.placedTiles.value = data.placedTiles;
+                            resolve(true);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing JSON:', e);
+                        alert('Error parsing JSON!');
+                        resolve(false);
+                    }
+                }
+                reader.readAsText(file);
+            });
+            //close/exit/cancel
+            input.addEventListener("cancel", () => {
+                console.log('File loading cancelled');
+                resolve(false);
+            })
+
+            input.click();
+        });
+    }
+
+    private static toJSON(): string {
+        return JSON.stringify({
+            placedTiles: Session.placedTiles.value,
+        })
+    }
+}

@@ -26,6 +26,8 @@
       <div class="flex gap-2">
         <button class="px-2 py-1 border rounded" @click="clearAll">Clear</button>
         <button class="px-2 py-1 border rounded" @click="centerView">Center</button>
+        <button class="px-2 py-1 border rounded" @click="Session.save()">Save</button>
+        <button class="px-2 py-1 border rounded" @click="loadFromFile">Load</button>
         <span class="text-xs text-gray-600">Zoom: {{ scale.toFixed(2) }}</span>
       </div>
       <div class="text-xs text-gray-600 leading-5">
@@ -48,6 +50,8 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { STAMPS, PALETTE } from '/src/core/objects'
 import {type PlacedObject, type XY} from '/src/core/types'
 import type {Stamp} from "/src/core/types.ts";
+import {Session} from '../core/session.ts';
+
 
 /** === Welt === */
 const WORLD_W = 1199
@@ -57,7 +61,7 @@ const palette = PALETTE
 
 /** === Sparse-Grid, Objekte & Banner-Overlay === */
 const tiles = ref<Map<string, number>>(new Map())                // "x,y" -> color (nur gesetzte Zellen)
-const objects = ref<PlacedObject[]>([])                          // platzierte Gebäude
+// const objects = ref<PlacedObject[]>([])                          // platzierte Gebäude
 const bannerOverlay = ref<Map<string, number>>(new Map())        // "x,y" -> coverage count
 
 /** === UI === */
@@ -101,8 +105,8 @@ function addBannerRange(center: XY, range: number, delta: 1 | -1) {
 
 /** === Platzieren/Löschen eines Stamps === */
 let nextId = 1
-function applyStampAt(gx:number, gy:number, erase=false) {
-  const stamp = activeStamp.value
+function applyStampAt(gx:number, gy:number, erase=false, obj:PlacedObject=null) {
+  const stamp = obj ? STAMPS[obj.stampId] : activeStamp.value
   if (!stamp) return
 
   if (!erase) {
@@ -121,15 +125,19 @@ function applyStampAt(gx:number, gy:number, erase=false) {
 
   // 2) Objektliste aktualisieren (nur wenn platzieren)
   if (!erase) {
-    const obj: PlacedObject = {
-      id: String(nextId++),
-      stampId: stamp.id,
-      origin: { x: gx, y: gy },
-      color: (stamp.color ?? current.value),
-      bbox: stamp.bbox,
-      bannerRange: stamp.bannerRange
+    if (!obj) {
+      obj = {
+        id: String(nextId++),
+        stampId: stamp.id,
+        origin: { x: gx, y: gy },
+        color: (stamp.color ?? current.value),
+        bbox: stamp.bbox,
+        bannerRange: stamp.bannerRange
+      }
+      Session.placedTiles.value.push(obj)
     }
-    objects.value.push(obj)
+
+
 
     // 3) Banner-Range-Overlay
     if (stamp.bannerRange && stamp.bannerRange > 0) {
@@ -137,8 +145,8 @@ function applyStampAt(gx:number, gy:number, erase=false) {
     }
   } else {
     // Beim Radieren: grob alle Objekte entfernen, die den Ursprung treffen (einfacher Ansatz)
-    const before = objects.value.length
-    objects.value = objects.value.filter(o => {
+    const before = Session.placedTiles.value.length
+    Session.placedTiles.value = Session.placedTiles.value.filter(o => {
       const stamp2 = STAMPS[o.stampId]
       const hit = stamp2.shape.some(s => (o.origin.x + s.x === gx) && (o.origin.y + s.y === gy))
       if (hit && o.bannerRange) addBannerRange(o.origin, o.bannerRange, -1)
@@ -308,20 +316,33 @@ function draw() {
   // 4) Grid-Masking für Mehrfeld-Objekte (deckt nur INNERE Linien ab)
   //    Wir zeichnen eine volle Rechteckfläche in Objektfarbe,
   //    aber leicht "eingezogen", damit Außenkanten (Grid) sichtbar bleiben.
-  for (const obj: Stamp of objects.value) {
+  for (const obj: Stamp of Session.placedTiles.value) {
     if (!obj.bbox || !obj.bbox.w || !obj.bbox.h) continue
     const ox = obj.origin.x, oy = obj.origin.y
     const w  = obj.bbox.w, h = obj.bbox.h
     // Sichtbarkeits-Check grob:
     if (ox+w < x1 || ox > x2+1 || oy+h < y1 || oy > y2+1) continue
 
+    const drawX = (ox - Math.floor(w / 2)) * TILE + inset;
+    const drawY = (oy - Math.floor(h / 2)) * TILE + inset;
+
     ctx.fillStyle = obj.color;
-    ctx.fillRect(
-        ox*TILE + inset,
-        oy*TILE + inset,
-        w*TILE - 2*inset,
-        h*TILE - 2*inset
-    )
+
+    if (w % 2 === 0 && h % 2 === 0) {
+      ctx.fillRect(
+          ox*TILE + inset,
+          oy*TILE + inset,
+          w*TILE - 2*inset,
+          h*TILE - 2*inset
+      )
+    } else {
+      ctx.fillRect(
+          drawX,
+          drawY,
+          w * TILE - 2 * inset,
+          h * TILE - 2 * inset
+      );
+    }
   }
 
   // 5) Hover-Vorschau
@@ -396,9 +417,23 @@ function draw() {
 /** === Actions === */
 function clearAll() {
   tiles.value.clear()
-  objects.value = []
+  Session.placedTiles.value = []
   bannerOverlay.value.clear()
   draw()
+}
+
+function loadFromFile() {
+  clearAll()
+  Session.load().then((result) => {
+    console.log('Result:', result, 'Session:', Session.placedTiles.value)
+
+    for (const obj of Session.placedTiles.value) {
+      applyStampAt(obj.origin.x, obj.origin.y, false, obj)
+    }
+    draw()
+  }).catch(err => {
+    console.error('Error loading session:', err)
+  })
 }
 
 /** === Lifecycle === */

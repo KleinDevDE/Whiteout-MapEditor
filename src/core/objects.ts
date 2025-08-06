@@ -21,7 +21,7 @@ export const STAMPS: Record<string, Stamp> = {
         id: 'alliance_farm', label: 'Alliance farm',
         shape: [{x:0,y:0},{x:1,y:0},{x:0,y:1},{x:1,y:1}],
         color: '#3a3a3a', bbox: { w:2, h:2 }
-        //TODO Type wod, coal etc.
+        //TODO Type wood, coal etc.
     },
     bear_trap: {
         id: 'bear_trap', label: 'Bear trap',
