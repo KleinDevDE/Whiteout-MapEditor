@@ -12,10 +12,10 @@
 
       <div class="text-sm font-medium mt-1">Color</div>
       <div class="flex gap-2 items-center">
-        <button v-for="(c,i) in palette" :key="c"
+        <button v-for="(c) in palette" :key="c"
                 class="w-6 h-6 border rounded"
-                :style="{background:c, outline: current===i ? '2px solid black' : 'none'}"
-                @click="current=i" :title="c"/>
+                :style="{background:c, outline: current===c ? '2px solid black' : 'none'}"
+                @click="current=c" :title="c"/>
         <button class="px-2 py-1 border rounded"
                 :class="toolMode==='erase' ? 'bg-gray-200' : ''"
                 @click="toolMode = (toolMode==='paint' ? 'erase' : 'paint')">
@@ -47,9 +47,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import { STAMPS, PALETTE } from '/src/core/objects'
-import {type PlacedObject, type XY} from '/src/core/types'
-import type {Stamp} from "/src/core/types.ts";
+import { STAMPS, PALETTE } from '../core/objects'
+import {type PlacedObject, type XY} from '../core/types'
+// import type {Stamp} from "../core/types.ts";
 import {Session} from '../core/session.ts';
 
 
@@ -60,13 +60,13 @@ const TILE    = 24
 const palette = PALETTE
 
 /** === Sparse-Grid, Objekte & Banner-Overlay === */
-const tiles = ref<Map<string, number>>(new Map())                // "x,y" -> color (nur gesetzte Zellen)
+const tiles = ref<Map<string, string>>(new Map())                // "x,y" -> color (nur gesetzte Zellen)
 // const objects = ref<PlacedObject[]>([])                          // platzierte Gebäude
 const bannerOverlay = ref<Map<string, number>>(new Map())        // "x,y" -> coverage count
 
 /** === UI === */
 const canvas  = ref<HTMLCanvasElement|null>(null)
-const current = ref(0)
+const current = ref("")
 const toolMode= ref<'paint'|'erase'>('paint')
 const selectedTool = ref<string>('brush')
 
@@ -105,7 +105,7 @@ function addBannerRange(center: XY, range: number, delta: 1 | -1) {
 
 /** === Platzieren/Löschen eines Stamps === */
 let nextId = 1
-function applyStampAt(gx:number, gy:number, erase=false, obj:PlacedObject=null) {
+function applyStampAt(gx:number, gy:number, erase=false, obj:PlacedObject|null=null) {
   const stamp = obj ? STAMPS[obj.stampId] : activeStamp.value
   if (!stamp) return
 
@@ -145,7 +145,7 @@ function applyStampAt(gx:number, gy:number, erase=false, obj:PlacedObject=null) 
     }
   } else {
     // Beim Radieren: grob alle Objekte entfernen, die den Ursprung treffen (einfacher Ansatz)
-    const before = Session.placedTiles.value.length
+    // const before = Session.placedTiles.value.length
     Session.placedTiles.value = Session.placedTiles.value.filter(o => {
       const stamp2 = STAMPS[o.stampId]
       const hit = stamp2.shape.some(s => (o.origin.x + s.x === gx) && (o.origin.y + s.y === gy))
@@ -316,7 +316,7 @@ function draw() {
   // 4) Grid-Masking für Mehrfeld-Objekte (deckt nur INNERE Linien ab)
   //    Wir zeichnen eine volle Rechteckfläche in Objektfarbe,
   //    aber leicht "eingezogen", damit Außenkanten (Grid) sichtbar bleiben.
-  for (const obj: Stamp of Session.placedTiles.value) {
+  for (const obj of Session.placedTiles.value) {
     if (!obj.bbox || !obj.bbox.w || !obj.bbox.h) continue
     const ox = obj.origin.x, oy = obj.origin.y
     const w  = obj.bbox.w, h = obj.bbox.h
@@ -361,7 +361,7 @@ function draw() {
         ctx.fillRect(x*TILE, y*TILE, TILE, TILE)
       }
 
-      if (stamp.bannerRange > 0 && tiles.value.get(keyOf(hoverX.value,hoverY.value)) === undefined) {
+      if (stamp.bannerRange!== undefined && stamp.bannerRange > 0 && tiles.value.get(keyOf(hoverX.value,hoverY.value)) === undefined) {
       // if (stamp.bannerRange > 0) {
         ctx.save()
         ctx.globalAlpha = 0.12
