@@ -22,3 +22,40 @@ export interface PlacedObject {
     bbox?: { w: number; h: number };
     bannerRange?: number;
 }
+
+export interface Color {
+    hex: string;
+    alpha: number;
+}
+
+export interface ColorPalette {
+    [key: number]: Color;
+}
+
+export interface Tile {
+    x: number;
+    y: number;
+    is_solid: boolean;
+}
+
+export interface Building {
+    type: string;
+    tiles: Tile[];
+    center: XY;
+}
+
+export interface BuildingType {
+    id: string;
+    label: string; //TODO Multilingual (use object or lang-key or something else)
+    color: string;
+    shape: XY[];
+    extras: {
+        level: number|null;
+        is_banner: boolean;
+    }
+}
+
+export interface Configuration {
+    palette: ColorPalette;
+    buildingTypes: Record<string, BuildingType>;
+}

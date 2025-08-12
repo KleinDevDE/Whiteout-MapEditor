@@ -1,8 +1,20 @@
 import {ref} from "vue";
-import type {PlacedObject} from "./types.ts";
+import type {Building, Configuration} from "./types.ts";
+import {BUILDING_TYPES} from "./objects.ts";
 
 export class Session {
-    static placedTiles = ref<PlacedObject[]>([])
+    static buildings = ref<Building[]>([])
+    static configuration = ref<Configuration>({
+        palette: {
+            0: { hex: '#ef4444', alpha: 1 }, // red
+            1: { hex: '#3b82f6', alpha: 1 }, // blue
+            2: { hex: '#22c55e', alpha: 1 }, // green
+            3: { hex: '#f59e0b', alpha: 1 }, // yellow
+            4: { hex: '#8b5cf6', alpha: 1 }, // purple
+            5: { hex: '#94a3b8', alpha: 1 }  // gray
+        },
+        buildingTypes: BUILDING_TYPES
+    });
 
     static save(): void {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(this.toJSON());
@@ -31,11 +43,9 @@ export class Session {
                     try {
                         const data = JSON.parse(text);
                         console.log('Loaded data:', data);
-                        if (data.placedTiles) {
-                            console.log('Loaded placedTiles:', data.placedTiles);
-                            Session.placedTiles.value = data.placedTiles;
-                            resolve(true);
-                        }
+                        Session.buildings.value = data.placedTiles ?? this.buildings;
+                        Session.configuration.value = data.configuration ?? this.configuration;
+                        resolve(true);
                     } catch (e) {
                         console.error('Error parsing JSON:', e);
                         alert('Error parsing JSON!');
@@ -56,7 +66,8 @@ export class Session {
 
     private static toJSON(): string {
         return JSON.stringify({
-            placedTiles: Session.placedTiles.value,
+            placedTiles: Session.buildings.value,
+            configuration: Session.configuration.value
         })
     }
 }

@@ -1,4 +1,4 @@
-import type { Stamp } from './types';
+import type {BuildingType, Stamp} from './types';
 
 export const PALETTE = ['#ef4444','#3b82f6','#22c55e','#f59e0b','#8b5cf6','#94a3b8'];
 
@@ -39,3 +39,43 @@ export const STAMPS: Record<string, Stamp> = {
         bannerRange: 3
     }
 };
+
+
+export const BUILDING_TYPES: Record<string, BuildingType> = {
+    banner: {
+        id: 'banner',
+        label: 'Banner',
+        color: PALETTE[5],
+        shape: [{x:0,y:0}],
+        extras: {
+            level: null,
+            is_banner: true
+        }
+    },
+    bear_trap: {
+        id: 'bear_trap',
+        label: 'Bear Trap',
+        color: PALETTE[0],
+        shape: [
+            {x:-1,y:-1},{x:0,y:-1},{x:1,y:-1},
+            {x:-1,y: 0},{x:0,y: 0},{x:1,y: 0},
+            {x:-1,y: 1},{x:0,y: 1},{x:1,y: 1},
+        ],
+        extras: {
+            level: null,
+            is_banner: false
+        }
+    },
+    city: {
+        id: 'city',
+        label: 'City',
+        color: PALETTE[1],
+        shape: [
+            {x:0,y:0},{x:1,y:0},{x:0,y:1},{x:1,y:1}
+        ],
+        extras: {
+            level: null,
+            is_banner: false
+        }
+    }
+}
