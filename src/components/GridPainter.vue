@@ -154,6 +154,8 @@ function applyStampAt(gx:number, gy:number, erase=false, obj:PlacedObject|null=n
     })
     // (Optional: smarter löschen per Bounding-Box)
   }
+
+  Session.saveDraft();
 }
 
 function canPlaceStamp(gx:number, gy:number) {
@@ -419,6 +421,7 @@ function clearAll() {
   tiles.value.clear()
   Session.placedTiles.value = []
   bannerOverlay.value.clear()
+  Session.saveDraft();
   draw()
 }
 
@@ -438,6 +441,7 @@ function loadFromFile() {
 
 /** === Lifecycle === */
 onMounted(() => {
+  Session.loadDraft();
   ro = new ResizeObserver(() => resizeCanvas())
   ro.observe(canvas.value!)
   resizeCanvas()

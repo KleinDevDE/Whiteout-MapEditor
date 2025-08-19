@@ -4,6 +4,25 @@ import type {PlacedObject} from "./types.ts";
 export class Session {
     static placedTiles = ref<PlacedObject[]>([])
 
+    static saveDraft(): void {
+        //Save current stata in LocalStorage
+        localStorage.setItem('map-draft', this.toJSON());
+    }
+
+    static loadDraft(): void {
+        const savedData = localStorage.getItem('map-draft');
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                if (data.placedTiles) {
+                    Session.placedTiles.value = data.placedTiles;
+                }
+            } catch (e) {
+                console.error('Error parsing saved data:', e);
+            }
+        }
+    }
+
     static save(): void {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(this.toJSON());
         const downloadAnchorNode = document.createElement('a');
@@ -34,6 +53,7 @@ export class Session {
                         if (data.placedTiles) {
                             console.log('Loaded placedTiles:', data.placedTiles);
                             Session.placedTiles.value = data.placedTiles;
+                            Session.saveDraft();
                             resolve(true);
                         }
                     } catch (e) {
