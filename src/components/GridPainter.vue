@@ -43,6 +43,9 @@
             @mousedown="onDown" @mousemove="onMove" @mouseup="onUp" @mouseleave="onUp"
             @wheel.prevent="onWheel" />
   </div>
+  <MapNavigator
+      :hoverX="hoverX" :hoverY="hoverY" :zoomIn="zoomIn" :zoomOut="zoomOut"
+  ></MapNavigator>
 </template>
 
 <script setup lang="ts">
@@ -51,6 +54,7 @@ import { STAMPS, PALETTE } from '../core/objects'
 import {type PlacedObject, type XY} from '../core/types'
 // import type {Stamp} from "../core/types.ts";
 import {Session} from '../core/session.ts';
+import MapNavigator from "./Map/MapNavigator.vue";
 
 
 /** === Welt === */
@@ -448,6 +452,20 @@ onMounted(() => {
   centerView()
 })
 onBeforeUnmount(() => { ro?.disconnect() })
+
+
+//zoom-in and out listener ($emit('zoom-in') and $emit('zoom-out')
+function zoomIn() {
+  scale.value = Math.min(6, scale.value + 0.1)
+  draw()
+}
+
+function zoomOut() {
+  scale.value = Math.max(0.2, scale.value - 0.1)
+  draw()
+}
+
+
 </script>
 
 <style scoped>
