@@ -450,6 +450,10 @@ onMounted(() => {
   ro.observe(canvas.value!)
   resizeCanvas()
   centerView()
+  for (const obj of Session.placedTiles.value) {
+    applyStampAt(obj.origin.x, obj.origin.y, false, obj)
+  }
+  draw()
 })
 onBeforeUnmount(() => { ro?.disconnect() })
 
