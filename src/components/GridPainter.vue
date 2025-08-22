@@ -90,7 +90,7 @@ const activeStamp = computed(() => STAMPS[selectedTool.value])
 
 /** === Helpers === */
 const keyOf = (x:number,y:number)=> `${x},${y}`
-const inBounds = (x:number,y:number)=> x>=0 && x<WORLD_W && y>=0 && y<WORLD_H
+const inBounds = (x:number,y:number)=> x>=0 && x<WORLD_W+1 && y>=0 && y<WORLD_H+1
 
 function addBannerRange(center: XY, range: number, delta: 1 | -1) {
   // Quadratischer Bereich: (2*range+1) × (2*range+1)
@@ -198,8 +198,8 @@ function visibleBounds() {
   const inv = 1 / scale.value
   const x1 = Math.max(0, Math.floor((-offset.value.x) * inv / TILE) - 1)
   const y1 = Math.max(0, Math.floor((-offset.value.y) * inv / TILE) - 1)
-  const x2 = Math.min(WORLD_W-1, Math.ceil((c.clientWidth  - offset.value.x) * inv / TILE) + 1)
-  const y2 = Math.min(WORLD_H-1, Math.ceil((c.clientHeight - offset.value.y) * inv / TILE) + 1)
+  const x2 = Math.min(WORLD_W, Math.ceil((c.clientWidth  - offset.value.x) * inv / TILE) + 1)
+  const y2 = Math.min(WORLD_H, Math.ceil((c.clientHeight - offset.value.y) * inv / TILE) + 1)
   return { x1, y1, x2, y2 }
 }
 function toGrid(e: MouseEvent) {
