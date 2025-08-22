@@ -44,7 +44,7 @@
             @wheel.prevent="onWheel" />
   </div>
   <MapNavigator
-      :hoverX="hoverX" :hoverY="hoverY" :zoomIn="zoomIn" :zoomOut="zoomOut"
+      :hoverX="hoverX" :hoverY="hoverY" :zoomIn="zoomIn" :zoomOut="zoomOut" :goTo="goTo"
   ></MapNavigator>
 </template>
 
@@ -462,6 +462,12 @@ function zoomIn() {
 
 function zoomOut() {
   scale.value = Math.max(0.2, scale.value - 0.1)
+  draw()
+}
+
+function goTo(x:number, y:number) {
+  offset.value.x = x * TILE - (x * TILE + TILE / 2)
+  offset.value.y = y * TILE - (y * TILE + TILE / 2)
   draw()
 }
 
