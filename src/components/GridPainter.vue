@@ -470,8 +470,9 @@ function zoomOut() {
 }
 
 function goTo(x:number, y:number) {
-  offset.value.x = x * TILE - (x * TILE + TILE / 2)
-  offset.value.y = y * TILE - (y * TILE + TILE / 2)
+  const c = canvas.value!
+  offset.value.x = c.clientWidth / 2 - (x + 0.5) * TILE * scale.value
+  offset.value.y = c.clientHeight / 2 - (y + 0.5) * TILE * scale.value
   draw()
 }
 
