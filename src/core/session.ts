@@ -10,7 +10,27 @@ export class Session {
         localStorage.setItem('map-draft', this.toJSON());
     }
 
-    static loadDraft(): void {
+    static async loadDraft(): Promise<void> {
+        const draftId = (window as any).DRAFT_ID as string | undefined;
+        if (draftId) {
+            try {
+                const res = await fetch(`/drafts/${draftId}.json`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.placedTiles) {
+                        Session.placedTiles.value = data.placedTiles;
+                        for (const obj of Session.placedTiles.value) {
+                            obj.color = STAMPS[obj.stampId].color ?? '#000000';
+                        }
+                        this.saveDraft();
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading shared draft:', e);
+            }
+            return;
+        }
+
         const savedData = localStorage.getItem('map-draft');
         if (savedData) {
             try {

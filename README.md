@@ -4,6 +4,6 @@ This template should help get you started developing with Vue 3 and TypeScript i
 
 ## Draft Sharing
 
-The application can save the current map as a draft on the server. A small PHP script (`public/save_draft.php`) stores the JSON data and returns a shareable link. Each request is rate limited to prevent abuse. The editor exposes a **Share** button that copies the generated URL to the clipboard.
+The application can save the current map as a draft on the server. A small PHP script (`public/save_draft.php`) stores the JSON data and returns a shareable link like `https://domain/save/abcd1234`. Each request is rate limited to prevent abuse. The editor exposes a **Share** button that shows the link in a popup with a copy-to-clipboard button.
 
 Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).

@@ -45,5 +45,8 @@ $id = bin2hex(random_bytes(8));
 $filePath = $draftDir . '/' . $id . '.json';
 file_put_contents($filePath, $body);
 
-$url = dirname($_SERVER['SCRIPT_NAME']) . '/drafts/' . $id . '.json';
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$base = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+$url = $scheme . '://' . $host . $base . '/save/' . $id;
 echo json_encode(['url' => $url]);

@@ -90,6 +90,28 @@
         :goTo="goTo"
     ></MapNavigator>
     <InfoBox></InfoBox>
+    <div
+        v-if="shareUrl"
+        class="fixed inset-0 z-20 flex items-center justify-center bg-black/50"
+    >
+        <div class="rounded bg-white p-6 text-center shadow-lg">
+            <div class="mb-4 text-lg font-bold break-all">{{ shareUrl }}</div>
+            <div class="flex justify-center gap-2">
+                <button
+                    class="rounded border bg-gray-100 px-2 py-1 hover:cursor-pointer hover:bg-gray-400 hover:text-white"
+                    @click="copyShareLink"
+                >
+                    Copy
+                </button>
+                <button
+                    class="rounded border bg-gray-100 px-2 py-1 hover:cursor-pointer hover:bg-gray-400 hover:text-white"
+                    @click="shareUrl = null"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -117,6 +139,7 @@ const canvas = ref<HTMLCanvasElement | null>(null);
 const current = ref(palette[0]);
 const toolMode = ref<'paint' | 'erase'>('paint');
 const selectedTool = ref<string>('brush');
+const shareUrl = ref<string | null>(null);
 
 const hoverX = ref<number | null>(null); // editor coords
 const hoverY = ref<number | null>(null);
@@ -594,20 +617,21 @@ function loadFromFile() {
 async function share() {
     const url = await Session.share();
     if (url) {
-        try {
-            await navigator.clipboard.writeText(url);
-            alert(`Link copied to clipboard:\n${url}`);
-        } catch (e) {
-            alert(`Link: ${url}`);
-        }
+        shareUrl.value = url;
     } else {
         alert('Sharing failed');
     }
 }
 
+function copyShareLink() {
+    if (shareUrl.value) {
+        navigator.clipboard.writeText(shareUrl.value);
+    }
+}
+
 /** === Lifecycle === */
-onMounted(() => {
-    Session.loadDraft();
+onMounted(async () => {
+    await Session.loadDraft();
     ro = new ResizeObserver(() => resizeCanvas());
     ro.observe(canvas.value!);
     resizeCanvas();
