@@ -33,7 +33,7 @@
       <div class="text-xs text-gray-600 leading-5">
         Links: platzieren • Rechts: löschen<br>
         Drag: <kbd>Shift</kbd> / Mittelklick (Pan)<br>
-        Koord: {{ hoverX }}, {{ hoverY }} • Tool: {{ selectedTool }}
+        Koord: {{ hoverWorldX }}, {{ hoverWorldY }} • Tool: {{ selectedTool }}
       </div>
     </div>
 
@@ -44,7 +44,7 @@
             @wheel.prevent="onWheel" />
   </div>
   <MapNavigator
-      :hoverX="hoverX" :hoverY="hoverY" :zoomIn="zoomIn" :zoomOut="zoomOut" :goTo="goTo"
+      :hoverX="hoverWorldX" :hoverY="hoverWorldY" :zoomIn="zoomIn" :zoomOut="zoomOut" :goTo="goTo"
   ></MapNavigator>
 </template>
 
@@ -58,8 +58,8 @@ import MapNavigator from "./Map/MapNavigator.vue";
 
 
 /** === Welt === */
-const WORLD_W = 1199
-const WORLD_H = 1199
+const WORLD_W = 1200
+const WORLD_H = 1200
 const TILE    = 24
 const palette = PALETTE
 
@@ -74,8 +74,10 @@ const current = ref("")
 const toolMode= ref<'paint'|'erase'>('paint')
 const selectedTool = ref<string>('brush')
 
-const hoverX  = ref<number|null>(null)
+const hoverX  = ref<number|null>(null) // editor coords
 const hoverY  = ref<number|null>(null)
+const hoverWorldX = ref<number|null>(null) // game coords
+const hoverWorldY = ref<number|null>(null)
 
 const scale   = ref(1)
 const offset  = ref({ x: 0, y: 0 })
@@ -91,6 +93,10 @@ const activeStamp = computed(() => STAMPS[selectedTool.value])
 /** === Helpers === */
 const keyOf = (x:number,y:number)=> `${x},${y}`
 const inBounds = (x:number,y:number)=> x>=0 && x<WORLD_W && y>=0 && y<WORLD_H
+
+// Editor uses top-left origin; game uses bottom-left with axes flipped
+const toGameCoords = (x:number, y:number) => ({ x: WORLD_H - 1 - y, y: WORLD_W - 1 - x })
+const toEditorCoords = (x:number, y:number) => ({ x: WORLD_W - 1 - y, y: WORLD_H - 1 - x })
 
 function addBannerRange(center: XY, range: number, delta: 1 | -1) {
   // Quadratischer Bereich: (2*range+1) × (2*range+1)
@@ -118,6 +124,8 @@ function applyStampAt(gx:number, gy:number, erase=false, obj:PlacedObject|null=n
     if (!ok) return // ❗ Platzieren unterbinden, wenn kollidiert
   }
 
+  const gameOrigin = toGameCoords(gx, gy)
+
   // 1) Zellen setzen/löschen (kein Collision-Check)
   for (const c of stamp.shape) {
     const x = gx + c.x, y = gy + c.y
@@ -133,7 +141,7 @@ function applyStampAt(gx:number, gy:number, erase=false, obj:PlacedObject|null=n
       obj = {
         id: String(nextId++),
         stampId: stamp.id,
-        origin: { x: gx, y: gy },
+        origin: gameOrigin,
         color: (stamp.color ?? current.value),
         bbox: stamp.bbox,
         bannerRange: stamp.bannerRange
@@ -141,19 +149,20 @@ function applyStampAt(gx:number, gy:number, erase=false, obj:PlacedObject|null=n
       Session.placedTiles.value.push(obj)
     }
 
-
-
     // 3) Banner-Range-Overlay
     if (stamp.bannerRange && stamp.bannerRange > 0) {
-      addBannerRange(obj.origin, stamp.bannerRange, +1)
+      addBannerRange({ x: gx, y: gy }, stamp.bannerRange, +1)
     }
   } else {
     // Beim Radieren: grob alle Objekte entfernen, die den Ursprung treffen (einfacher Ansatz)
-    // const before = Session.placedTiles.value.length
+    const gPos = gameOrigin
     Session.placedTiles.value = Session.placedTiles.value.filter(o => {
       const stamp2 = STAMPS[o.stampId]
-      const hit = stamp2.shape.some(s => (o.origin.x + s.x === gx) && (o.origin.y + s.y === gy))
-      if (hit && o.bannerRange) addBannerRange(o.origin, o.bannerRange, -1)
+      const hit = stamp2.shape.some(s => (o.origin.x + s.x === gPos.x) && (o.origin.y + s.y === gPos.y))
+      if (hit && o.bannerRange) {
+        const editorOrigin = toEditorCoords(o.origin.x, o.origin.y)
+        addBannerRange(editorOrigin, o.bannerRange, -1)
+      }
       return !hit
     })
     // (Optional: smarter löschen per Bounding-Box)
@@ -217,6 +226,9 @@ function onDown(e: MouseEvent) {
   } else {
     mode.value = 'paint'
     const { gx, gy } = toGrid(e)
+    const world = toGameCoords(gx, gy)
+    hoverX.value = gx; hoverY.value = gy
+    hoverWorldX.value = world.x; hoverWorldY.value = world.y
     applyStampAt(gx, gy, e.button === 2 || toolMode.value==='erase')
     draw()
   }
@@ -224,6 +236,8 @@ function onDown(e: MouseEvent) {
 function onMove(e: MouseEvent) {
   const { gx, gy } = toGrid(e)
   hoverX.value = gx; hoverY.value = gy
+  const world = toGameCoords(gx, gy)
+  hoverWorldX.value = world.x; hoverWorldY.value = world.y
 
   if (mode.value === 'paint') {
     // applyStampAt(gx, gy, e.buttons === 2 || toolMode.value==='erase')
@@ -324,7 +338,8 @@ function draw() {
   //    aber leicht "eingezogen", damit Außenkanten (Grid) sichtbar bleiben.
   for (const obj of Session.placedTiles.value) {
     if (!obj.bbox || !obj.bbox.w || !obj.bbox.h) continue
-    const ox = obj.origin.x, oy = obj.origin.y
+    const editorOrigin = toEditorCoords(obj.origin.x, obj.origin.y)
+    const ox = editorOrigin.x, oy = editorOrigin.y
     const w  = obj.bbox.w, h = obj.bbox.h
     // Sichtbarkeits-Check grob:
     if (ox+w < x1 || ox > x2+1 || oy+h < y1 || oy > y2+1) continue
@@ -435,7 +450,8 @@ function loadFromFile() {
     console.log('Result:', result, 'Session:', Session.placedTiles.value)
 
     for (const obj of Session.placedTiles.value) {
-      applyStampAt(obj.origin.x, obj.origin.y, false, obj)
+      const editorPos = toEditorCoords(obj.origin.x, obj.origin.y)
+      applyStampAt(editorPos.x, editorPos.y, false, obj)
     }
     draw()
   }).catch(err => {
@@ -451,7 +467,8 @@ onMounted(() => {
   resizeCanvas()
   centerView()
   for (const obj of Session.placedTiles.value) {
-    applyStampAt(obj.origin.x, obj.origin.y, false, obj)
+    const editorPos = toEditorCoords(obj.origin.x, obj.origin.y)
+    applyStampAt(editorPos.x, editorPos.y, false, obj)
   }
   draw()
 })
@@ -471,8 +488,9 @@ function zoomOut() {
 
 function goTo(x:number, y:number) {
   const c = canvas.value!
-  offset.value.x = c.clientWidth / 2 - (x + 0.5) * TILE * scale.value
-  offset.value.y = c.clientHeight / 2 - (y + 0.5) * TILE * scale.value
+  const editor = toEditorCoords(x, y)
+  offset.value.x = c.clientWidth / 2 - (editor.x + 0.5) * TILE * scale.value
+  offset.value.y = c.clientHeight / 2 - (editor.y + 0.5) * TILE * scale.value
   draw()
 }
 
