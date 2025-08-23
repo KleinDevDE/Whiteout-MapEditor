@@ -2,38 +2,37 @@
   <div class="w-screen h-screen overflow-hidden relative bg-white">
     <!-- Toolbar -->
     <div class="absolute z-10 bg-gray-700/70 p-3 shadow-md border border-gray-500 shadow-gray-700 m-3 rounded-lg">
-      <div class="text-sm font-medium">Placement</div>
-      <div class="flex flex-wrap gap-2">
+      <div class="text-sm font-bold text-gray-100">Placement</div>
+      <div class="flex flex-wrap gap-2 mb-2">
         <button v-for="opt in toolOptions" :key="opt.id"
-                class="px-2 py-1 border rounded text-sm hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white"
-                :class="selectedTool===opt.id ? 'bg-gray-200 font-medium' : ''"
+                class="px-2 py-1 border rounded text-sm btn"
+                :class="selectedTool===opt.id ? 'active' : ''"
                 @click="selectedTool = opt.id">{{ opt.label }}</button>
       </div>
 
-      <div class="text-sm font-medium mt-1">Color</div>
+      <div class="text-sm font-bold mt-1 text-gray-100">Color</div>
       <div class="flex gap-2 items-center">
         <button v-for="(c) in palette" :key="c"
-                class="w-6 h-6 border rounded hover:cursor-pointer hover:border-white"
-                :style="{background:c, outline: current===c ? '2px solid black' : 'none'}"
+                class="w-6 h-6 btn"
+                :style="{background:c}"
+                :class="current===c ? 'active' : ''"
                 @click="current=c" :title="c"/>
-        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white"
-                :class="toolMode==='erase' ? 'bg-gray-200' : ''"
+        <button class="px-2 py-1 btn"
+                :class="toolMode==='erase' ? 'active' : ''"
                 @click="toolMode = (toolMode==='paint' ? 'erase' : 'paint')">
           {{ toolMode==='paint' ? 'Eraser' : 'Paint' }}
         </button>
       </div>
 
-      <div class="flex gap-2">
-        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="clearAll">Clear</button>
-        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="centerView">Center</button>
-        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="Session.save()">Save</button>
-        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="loadFromFile">Load</button>
+      <div class="flex gap-2 mb-5">
+        <button class="px-2 py-1 btn" @click="clearAll">Clear</button>
+        <button class="px-2 py-1 btn" @click="centerView">Center</button>
       </div>
-      <div class="text-xs text-gray-100 leading-5">
-        Left-Click: Place | Right-Click: Remove<br>
-        Tool: {{ selectedTool }} | Zoom: {{ scale.toFixed(2) }}
-      </div>
-      <div class="flex justify-end">
+      <div class="flex justify-between items-center">
+        <div class="text-xs text-gray-100 leading-5">
+          Left-Click: Place | Right-Click: Remove<br>
+          Tool: {{ selectedTool }} | Zoom: {{ scale.toFixed(2) }}
+        </div>
         <div class="flex gap-2">
           <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="Session.save()">Save</button>
           <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="loadFromFile">Load</button>
@@ -60,7 +59,7 @@ import {type PlacedObject, type XY} from '../core/types'
 // import type {Stamp} from "../core/types.ts";
 import {Session} from '../core/session.ts';
 import MapNavigator from "./Map/MapNavigator.vue";
-import InfoBox from "./Map/InfoBox.vue";
+import InfoBox from "./InfoBox.vue";
 
 
 /** === Welt === */
@@ -76,7 +75,7 @@ const bannerOverlay = ref<Map<string, number>>(new Map())        // "x,y" -> cov
 
 /** === UI === */
 const canvas  = ref<HTMLCanvasElement|null>(null)
-const current = ref("")
+const current = ref(palette[0])
 const toolMode= ref<'paint'|'erase'>('paint')
 const selectedTool = ref<string>('brush')
 
