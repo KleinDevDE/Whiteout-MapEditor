@@ -1,11 +1,11 @@
 <template>
   <div class="w-screen h-screen overflow-hidden relative bg-white">
     <!-- Toolbar -->
-    <div class="absolute left-3 top-3 z-10 bg-white/90 backdrop-blur rounded-lg shadow p-3 space-y-3 select-none">
+    <div class="absolute z-10 bg-gray-700/70 p-3 shadow-md border border-gray-500 shadow-gray-700 m-3 rounded-lg">
       <div class="text-sm font-medium">Placement</div>
       <div class="flex flex-wrap gap-2">
         <button v-for="opt in toolOptions" :key="opt.id"
-                class="px-2 py-1 border rounded text-sm"
+                class="px-2 py-1 border rounded text-sm hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white"
                 :class="selectedTool===opt.id ? 'bg-gray-200 font-medium' : ''"
                 @click="selectedTool = opt.id">{{ opt.label }}</button>
       </div>
@@ -13,10 +13,10 @@
       <div class="text-sm font-medium mt-1">Color</div>
       <div class="flex gap-2 items-center">
         <button v-for="(c) in palette" :key="c"
-                class="w-6 h-6 border rounded"
+                class="w-6 h-6 border rounded hover:cursor-pointer hover:border-white"
                 :style="{background:c, outline: current===c ? '2px solid black' : 'none'}"
                 @click="current=c" :title="c"/>
-        <button class="px-2 py-1 border rounded"
+        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white"
                 :class="toolMode==='erase' ? 'bg-gray-200' : ''"
                 @click="toolMode = (toolMode==='paint' ? 'erase' : 'paint')">
           {{ toolMode==='paint' ? 'Eraser' : 'Paint' }}
@@ -24,16 +24,20 @@
       </div>
 
       <div class="flex gap-2">
-        <button class="px-2 py-1 border rounded" @click="clearAll">Clear</button>
-        <button class="px-2 py-1 border rounded" @click="centerView">Center</button>
-        <button class="px-2 py-1 border rounded" @click="Session.save()">Save</button>
-        <button class="px-2 py-1 border rounded" @click="loadFromFile">Load</button>
-        <span class="text-xs text-gray-600">Zoom: {{ scale.toFixed(2) }}</span>
+        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="clearAll">Clear</button>
+        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="centerView">Center</button>
+        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="Session.save()">Save</button>
+        <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="loadFromFile">Load</button>
       </div>
-      <div class="text-xs text-gray-600 leading-5">
-        Links: platzieren • Rechts: löschen<br>
-        Drag: <kbd>Shift</kbd> / Mittelklick (Pan)<br>
-        Koord: {{ hoverX }}, {{ hoverY }} • Tool: {{ selectedTool }}
+      <div class="text-xs text-gray-100 leading-5">
+        Left-Click: Place | Right-Click: Remove<br>
+        Tool: {{ selectedTool }} | Zoom: {{ scale.toFixed(2) }}
+      </div>
+      <div class="flex justify-end">
+        <div class="flex gap-2">
+          <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="Session.save()">Save</button>
+          <button class="px-2 py-1 border rounded hover:cursor-pointer bg-gray-100 hover:bg-gray-400 hover:text-white" @click="loadFromFile">Load</button>
+        </div>
       </div>
     </div>
 
@@ -56,6 +60,7 @@ import {type PlacedObject, type XY} from '../core/types'
 // import type {Stamp} from "../core/types.ts";
 import {Session} from '../core/session.ts';
 import MapNavigator from "./Map/MapNavigator.vue";
+import InfoBox from "./Map/InfoBox.vue";
 
 
 /** === Welt === */
@@ -203,6 +208,7 @@ function visibleBounds() {
   const y2 = Math.min(WORLD_H, Math.ceil((c.clientHeight - offset.value.y) * inv / TILE) + 1)
   return { x1, y1, x2, y2 }
 }
+
 function toGrid(e: MouseEvent) {
   const rect = canvas.value!.getBoundingClientRect()
   const px = (e.clientX - rect.left - offset.value.x) / scale.value
