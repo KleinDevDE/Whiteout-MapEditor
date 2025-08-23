@@ -634,14 +634,14 @@ function loadFromFile() {
         });
 }
 
-async function share() {
-    const url = await Session.share();
-    if (url) {
-        shareUrl.value = url;
-    } else {
-        alert('Sharing failed');
-    }
-}
+// async function share() {
+//     const url = await Session.share();
+//     if (url) {
+//         shareUrl.value = url;
+//     } else {
+//         alert('Sharing failed');
+//     }
+// }
 
 function copyShareLink() {
     if (shareUrl.value) {
