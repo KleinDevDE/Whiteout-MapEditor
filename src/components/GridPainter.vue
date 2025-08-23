@@ -55,12 +55,12 @@
                     >
                         Save
                     </button>
-                    <button
-                        class="rounded border bg-gray-100 px-2 py-1 hover:cursor-pointer hover:bg-gray-400 hover:text-white"
-                        @click="share"
-                    >
-                        Share
-                    </button>
+<!--                    <button-->
+<!--                        class="rounded border bg-gray-100 px-2 py-1 hover:cursor-pointer hover:bg-gray-400 hover:text-white"-->
+<!--                        @click="share"-->
+<!--                    >-->
+<!--                        Share-->
+<!--                    </button>-->
                     <button
                         class="rounded border bg-gray-100 px-2 py-1 hover:cursor-pointer hover:bg-gray-400 hover:text-white"
                         @click="loadFromFile"
