@@ -1,5 +1,6 @@
 import {ref} from "vue";
 import type {PlacedObject} from "./types.ts";
+import {STAMPS} from "./objects.ts";
 
 export class Session {
     static placedTiles = ref<PlacedObject[]>([])
@@ -16,6 +17,11 @@ export class Session {
                 const data = JSON.parse(savedData);
                 if (data.placedTiles) {
                     Session.placedTiles.value = data.placedTiles;
+
+                    //Reset colors to the ones from STAMPS
+                    for (const obj of Session.placedTiles.value) {
+                        obj.color = STAMPS[obj.stampId].color ?? '#000000';
+                    }
                 }
             } catch (e) {
                 console.error('Error parsing saved data:', e);

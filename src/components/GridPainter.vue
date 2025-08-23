@@ -63,8 +63,8 @@ import InfoBox from "./InfoBox.vue";
 
 
 /** === Welt === */
-const WORLD_W = 1200
-const WORLD_H = 1200
+const WORLD_W = 1199
+const WORLD_H = 1199
 const TILE    = 24
 const palette = PALETTE
 
@@ -100,8 +100,8 @@ const keyOf = (x:number,y:number)=> `${x},${y}`
 const inBounds = (x:number,y:number)=> x>=0 && x<WORLD_W+1 && y>=0 && y<WORLD_H+1
 
 // Editor uses top-left origin; game uses bottom-left with axes flipped
-const toGameCoords = (x:number, y:number) => ({ x: WORLD_H - 1 - y, y: WORLD_W - 1 - x })
-const toEditorCoords = (x:number, y:number) => ({ x: WORLD_W - 1 - y, y: WORLD_H - 1 - x })
+const toGameCoords = (x:number, y:number) => ({ x: WORLD_H - y, y: WORLD_W - x })
+const toEditorCoords = (x:number, y:number) => ({ x: WORLD_W - y, y: WORLD_H - x })
 
 function addBannerRange(center: XY, range: number, delta: 1 | -1) {
   // Quadratischer Bereich: (2*range+1) × (2*range+1)
