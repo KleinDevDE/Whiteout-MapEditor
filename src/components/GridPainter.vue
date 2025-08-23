@@ -46,6 +46,7 @@
   <MapNavigator
       :hoverX="hoverX" :hoverY="hoverY" :zoomIn="zoomIn" :zoomOut="zoomOut" :goTo="goTo"
   ></MapNavigator>
+  <InfoBox></InfoBox>
 </template>
 
 <script setup lang="ts">
