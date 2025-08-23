@@ -294,7 +294,19 @@ function centerView() {
     const c = canvas.value!;
     offset.value.x = (c.clientWidth - WORLD_W * TILE * scale.value) / 2;
     offset.value.y = (c.clientHeight - WORLD_H * TILE * scale.value) / 2;
+    updateView();
     draw();
+}
+
+function updateView() {
+    const c = canvas.value!;
+    const centerEditorX =
+        (c.clientWidth / 2 - offset.value.x) / (TILE * scale.value);
+    const centerEditorY =
+        (c.clientHeight / 2 - offset.value.y) / (TILE * scale.value);
+    const world = toGameCoords(centerEditorX, centerEditorY);
+    Session.view.value = { x: world.x, y: world.y, scale: scale.value };
+    Session.saveDraft();
 }
 function visibleBounds() {
     const c = canvas.value!;
@@ -353,6 +365,7 @@ function onMove(e: MouseEvent) {
     } else if (mode.value === 'pan') {
         offset.value.x = e.clientX - dragStart.x;
         offset.value.y = e.clientY - dragStart.y;
+        updateView();
         draw();
     } else {
         // Cursor auf "not-allowed", wenn Stamp kollidieren würde
@@ -376,6 +389,7 @@ function onWheel(e: WheelEvent) {
     const z = scale.value / prev;
     offset.value.x = mouseX - (mouseX - offset.value.x) * z;
     offset.value.y = mouseY - (mouseY - offset.value.y) * z;
+    updateView();
     draw();
 }
 
@@ -607,6 +621,12 @@ function loadFromFile() {
                 const editorPos = toEditorCoords(obj.origin.x, obj.origin.y);
                 applyStampAt(editorPos.x, editorPos.y, false, obj);
             }
+            if (Session.view.value) {
+                scale.value = Session.view.value.scale ?? 1;
+                goTo(Session.view.value.x, Session.view.value.y);
+            } else {
+                centerView();
+            }
             draw();
         })
         .catch((err) => {
@@ -635,7 +655,12 @@ onMounted(async () => {
     ro = new ResizeObserver(() => resizeCanvas());
     ro.observe(canvas.value!);
     resizeCanvas();
-    centerView();
+    if (Session.view.value) {
+        scale.value = Session.view.value.scale ?? 1;
+        goTo(Session.view.value.x, Session.view.value.y);
+    } else {
+        centerView();
+    }
     for (const obj of Session.placedTiles.value) {
         const editorPos = toEditorCoords(obj.origin.x, obj.origin.y);
         applyStampAt(editorPos.x, editorPos.y, false, obj);
@@ -649,11 +674,13 @@ onBeforeUnmount(() => {
 //zoom-in and out listener ($emit('zoom-in') and $emit('zoom-out')
 function zoomIn() {
     scale.value = Math.min(6, scale.value + 0.1);
+    updateView();
     draw();
 }
 
 function zoomOut() {
     scale.value = Math.max(0.2, scale.value - 0.1);
+    updateView();
     draw();
 }
 
@@ -662,6 +689,7 @@ function goTo(x: number, y: number) {
     const editor = toEditorCoords(x, y);
     offset.value.x = c.clientWidth / 2 - (editor.x + 0.5) * TILE * scale.value;
     offset.value.y = c.clientHeight / 2 - (editor.y + 0.5) * TILE * scale.value;
+    updateView();
     draw();
 }
 </script>

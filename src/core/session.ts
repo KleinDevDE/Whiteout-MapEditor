@@ -4,6 +4,7 @@ import { STAMPS } from './objects.ts';
 
 export class Session {
     static placedTiles = ref<PlacedObject[]>([]);
+    static view = ref<{ x: number; y: number; scale: number } | null>(null);
 
     static saveDraft(): void {
         //Save current stata in LocalStorage
@@ -21,6 +22,9 @@ export class Session {
                         Session.placedTiles.value = data.placedTiles;
                         for (const obj of Session.placedTiles.value) {
                             obj.color = STAMPS[obj.stampId].color ?? '#000000';
+                        }
+                        if (data.view) {
+                            Session.view.value = data.view;
                         }
                         this.saveDraft();
                     }
@@ -42,6 +46,9 @@ export class Session {
                     for (const obj of Session.placedTiles.value) {
                         obj.color = STAMPS[obj.stampId].color ?? '#000000';
                     }
+                }
+                if (data.view) {
+                    Session.view.value = data.view;
                 }
             } catch (e) {
                 console.error('Error parsing saved data:', e);
@@ -105,9 +112,12 @@ export class Session {
                                 data.placedTiles
                             );
                             Session.placedTiles.value = data.placedTiles;
-                            Session.saveDraft();
-                            resolve(true);
                         }
+                        if (data.view) {
+                            Session.view.value = data.view;
+                        }
+                        Session.saveDraft();
+                        resolve(true);
                     } catch (e) {
                         console.error('Error parsing JSON:', e);
                         alert('Error parsing JSON!');
@@ -129,6 +139,7 @@ export class Session {
     private static toJSON(): string {
         return JSON.stringify({
             placedTiles: Session.placedTiles.value,
+            view: Session.view.value,
         });
     }
 }
