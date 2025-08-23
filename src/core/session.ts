@@ -21,7 +21,7 @@ export class Session {
                     if (data.placedTiles) {
                         Session.placedTiles.value = data.placedTiles;
                         for (const obj of Session.placedTiles.value) {
-                            obj.color = STAMPS[obj.stampId].color ?? '#000000';
+                            obj.color = STAMPS[obj.stampId].color ?? obj.color;
                         }
                         if (data.view) {
                             Session.view.value = data.view;

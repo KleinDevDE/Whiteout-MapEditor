@@ -6,12 +6,12 @@ declare global {
         DRAFT_ID?: string;
     }
 }
-
+const route = useRoute()
 const routes = [
     {path: '/', component: GridPainter},
     {
         path: '/save/:id', component: () => {
-            window.DRAFT_ID = useRoute().params.id as string;
+            window.DRAFT_ID = route.params.id as string;
             return GridPainter;
         }
     },
