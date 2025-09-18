@@ -33,7 +33,12 @@ export class Session {
             return;
         }
 
-        const savedData = localStorage.getItem('draft:'+window.location) ?? localStorage.getItem('map-draft');
+        const oldDraft = localStorage.getItem('map-draft');
+        if (oldDraft) {
+            localStorage.removeItem('map-draft');
+        }
+
+        const savedData = oldDraft ?? localStorage.getItem('draft:'+window.location);
         if (savedData) {
             try {
                 const data = JSON.parse(savedData);
