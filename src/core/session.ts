@@ -4,7 +4,7 @@ import { STAMPS } from './objects.ts';
 
 export class Session {
     static placedTiles = ref<PlacedObject[]>([]);
-    static view = ref<{ x: number; y: number; zoom: number } | null>({x: 0, y: 0, zoom: 1});
+    static view = ref<{ x: number; y: number; zoom: number } | null>(null);
 
     static saveDraft(): void {
         //Save current stata in LocalStorage
@@ -33,7 +33,7 @@ export class Session {
             return;
         }
 
-        const savedData = localStorage.getItem('draft:'+window.location);
+        const savedData = localStorage.getItem('draft:'+window.location) ?? localStorage.getItem('map-draft');
         if (savedData) {
             try {
                 const data = JSON.parse(savedData);
@@ -140,7 +140,7 @@ export class Session {
     private static toJSON(): string {
         return JSON.stringify({
             placedTiles: Session.placedTiles.value,
-            view: Session.view.value,
+            view: Session.view.value || { x: 0, y: 0, zoom: 1},
         });
     }
 }
