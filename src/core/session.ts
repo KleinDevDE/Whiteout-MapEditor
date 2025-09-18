@@ -4,29 +4,27 @@ import { STAMPS } from './objects.ts';
 
 export class Session {
     static placedTiles = ref<PlacedObject[]>([]);
-    static view = ref<{ x: number; y: number; scale: number } | null>(null);
+    static view = ref<{ x: number; y: number; zoom: number } | null>({x: 0, y: 0, zoom: 1});
 
     static saveDraft(): void {
         //Save current stata in LocalStorage
-        localStorage.setItem('map-draft', this.toJSON());
+        localStorage.setItem('draft:'+window.location, this.toJSON());
     }
 
     static async loadDraft(): Promise<void> {
-        const draftId = (window as any).DRAFT_ID as string | undefined;
-        if (draftId) {
+        if (window.DRAFT_ID !== undefined) {
             try {
-                const res = await fetch(`/drafts/${draftId}.json`);
+                const res = await fetch(`/share/load.php?id=${window.DRAFT_ID}`);
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.placedTiles) {
-                        Session.placedTiles.value = data.placedTiles;
+                    if (data.status && data.data.placedTiles) {
+                        Session.placedTiles.value = data.data.placedTiles;
                         for (const obj of Session.placedTiles.value) {
                             obj.color = STAMPS[obj.stampId].color ?? obj.color;
                         }
-                        if (data.view) {
-                            Session.view.value = data.view;
+                        if (data.data.view) {
+                            Session.view.value = data.data.view;
                         }
-                        this.saveDraft();
                     }
                 }
             } catch (e) {
@@ -35,7 +33,7 @@ export class Session {
             return;
         }
 
-        const savedData = localStorage.getItem('map-draft');
+        const savedData = localStorage.getItem('draft:'+window.location);
         if (savedData) {
             try {
                 const data = JSON.parse(savedData);
@@ -44,7 +42,7 @@ export class Session {
 
                     //Reset colors to the ones from STAMPS
                     for (const obj of Session.placedTiles.value) {
-                        obj.color = STAMPS[obj.stampId].color ?? '#000000';
+                        obj.color = STAMPS[obj.stampId].color ?? obj.color;
                     }
                 }
                 if (data.view) {
@@ -69,7 +67,7 @@ export class Session {
 
     static async share(): Promise<string | null> {
         try {
-            const res = await fetch('save_draft.php', {
+            const res = await fetch('share/store.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -111,6 +109,9 @@ export class Session {
                                 'Loaded placedTiles:',
                                 data.placedTiles
                             );
+                            for (const obj of Session.placedTiles.value) {
+                                obj.color = STAMPS[obj.stampId].color ?? obj.color;
+                            }
                             Session.placedTiles.value = data.placedTiles;
                         }
                         if (data.view) {

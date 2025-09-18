@@ -46,7 +46,7 @@
             <div class="flex items-center justify-between">
                 <div class="text-xs leading-5 text-gray-100">
                     Left-Click: Place | Right-Click: Remove<br />
-                    Tool: {{ selectedTool }} | Zoom: {{ scale.toFixed(2) }}
+                    Tool: {{ selectedTool }} | Zoom: {{ zoom.toFixed(2) }}
                 </div>
                 <div class="flex gap-2">
                     <button
@@ -55,12 +55,12 @@
                     >
                         Save
                     </button>
-<!--                    <button-->
-<!--                        class="rounded border bg-gray-100 px-2 py-1 hover:cursor-pointer hover:bg-gray-400 hover:text-white"-->
-<!--                        @click="share"-->
-<!--                    >-->
-<!--                        Share-->
-<!--                    </button>-->
+                    <button
+                        class="rounded border bg-gray-100 px-2 py-1 hover:cursor-pointer hover:bg-gray-400 hover:text-white"
+                        @click="share"
+                    >
+                        Share
+                    </button>
                     <button
                         class="rounded border bg-gray-100 px-2 py-1 hover:cursor-pointer hover:bg-gray-400 hover:text-white"
                         @click="loadFromFile"
@@ -146,7 +146,7 @@ const hoverY = ref<number | null>(null);
 const hoverWorldX = ref<number | null>(null); // game coords
 const hoverWorldY = ref<number | null>(null);
 
-const scale = ref(1);
+const zoom = ref(1);
 const offset = ref({ x: 0, y: 0 });
 const mode = ref<'paint' | 'pan' | false>(false);
 let dragStart = { x: 0, y: 0 };
@@ -292,8 +292,8 @@ function resizeCanvas() {
 }
 function centerView() {
     const c = canvas.value!;
-    offset.value.x = (c.clientWidth - WORLD_W * TILE * scale.value) / 2;
-    offset.value.y = (c.clientHeight - WORLD_H * TILE * scale.value) / 2;
+    offset.value.x = (c.clientWidth - WORLD_W * TILE * zoom.value) / 2;
+    offset.value.y = (c.clientHeight - WORLD_H * TILE * zoom.value) / 2;
     updateView();
     draw();
 }
@@ -301,16 +301,16 @@ function centerView() {
 function updateView() {
     const c = canvas.value!;
     const centerEditorX =
-        (c.clientWidth / 2 - offset.value.x) / (TILE * scale.value);
+        (c.clientWidth / 2 - offset.value.x) / (TILE * zoom.value);
     const centerEditorY =
-        (c.clientHeight / 2 - offset.value.y) / (TILE * scale.value);
+        (c.clientHeight / 2 - offset.value.y) / (TILE * zoom.value);
     const world = toGameCoords(centerEditorX, centerEditorY);
-    Session.view.value = { x: world.x, y: world.y, scale: scale.value };
+    Session.view.value = { x: world.x, y: world.y, zoom: zoom.value };
     Session.saveDraft();
 }
 function visibleBounds() {
     const c = canvas.value!;
-    const inv = 1 / scale.value;
+    const inv = 1 / zoom.value;
     const x1 = Math.max(0, Math.floor((-offset.value.x * inv) / TILE) - 1);
     const y1 = Math.max(0, Math.floor((-offset.value.y * inv) / TILE) - 1);
     const x2 = Math.min(
@@ -326,8 +326,8 @@ function visibleBounds() {
 
 function toGrid(e: MouseEvent) {
     const rect = canvas.value!.getBoundingClientRect();
-    const px = (e.clientX - rect.left - offset.value.x) / scale.value;
-    const py = (e.clientY - rect.top - offset.value.y) / scale.value;
+    const px = (e.clientX - rect.left - offset.value.x) / zoom.value;
+    const py = (e.clientY - rect.top - offset.value.y) / zoom.value;
     return { gx: Math.floor(px / TILE), gy: Math.floor(py / TILE) };
 }
 
@@ -383,10 +383,10 @@ function onWheel(e: WheelEvent) {
     const rect = canvas.value!.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const prev = scale.value;
+    const prev = zoom.value;
     const dir = e.deltaY > 0 ? -0.1 : 0.1;
-    scale.value = Math.min(6, Math.max(0.2, prev + dir));
-    const z = scale.value / prev;
+    zoom.value = Math.min(6, Math.max(0.2, prev + dir));
+    const z = zoom.value / prev;
     offset.value.x = mouseX - (mouseX - offset.value.x) * z;
     offset.value.y = mouseY - (mouseY - offset.value.y) * z;
     updateView();
@@ -398,8 +398,8 @@ function draw() {
     const c = canvas.value!,
         ctx = c.getContext('2d')!;
     const { x1, y1, x2, y2 } = visibleBounds();
-    const line = 1 / scale.value;
-    const inset = 0.5 / scale.value; // minimaler Rand, damit Außenkanten sichtbar bleiben
+    const line = 1 / zoom.value;
+    const inset = 0.5 / zoom.value; // minimaler Rand, damit Außenkanten sichtbar bleiben
 
     // Reset
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -409,7 +409,7 @@ function draw() {
 
     // Welt-Transform
     ctx.translate(offset.value.x, offset.value.y);
-    ctx.scale(scale.value, scale.value);
+    ctx.scale(zoom.value, zoom.value);
 
     // 1) Tiles (sichtbar)
     for (let y = y1; y <= y2; y++) {
@@ -433,10 +433,10 @@ function draw() {
 
     ctx.globalAlpha = 1;
     ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 2 / scale.value;
-    ctx.setLineDash([6 / scale.value, 4 / scale.value]);
+    ctx.lineWidth = 2 / zoom.value;
+    ctx.setLineDash([6 / zoom.value, 4 / zoom.value]);
     ctx.shadowColor = 'rgba(239,68,68,0.7)'; // rot
-    ctx.shadowBlur = 10 / scale.value;
+    ctx.shadowBlur = 10 / zoom.value;
 
     for (let y = y1; y <= y2; y++) {
         for (let x = x1; x <= x2; x++) {
@@ -455,8 +455,8 @@ function draw() {
     // 3) Grid-Linien (sichtbar)
     ctx.strokeStyle = '#cbd5e1';
     ctx.lineWidth = line;
-    const crispX = (x: number) => x * TILE + 0.5 / scale.value;
-    const crispY = (y: number) => y * TILE + 0.5 / scale.value;
+    const crispX = (x: number) => x * TILE + 0.5 / zoom.value;
+    const crispY = (y: number) => y * TILE + 0.5 / zoom.value;
     for (let x = x1; x <= x2 + 1; x++) {
         ctx.beginPath();
         const X = crispX(x);
@@ -555,10 +555,10 @@ function draw() {
 
                 ctx.globalAlpha = 1;
                 ctx.strokeStyle = '#ef4444';
-                ctx.lineWidth = 2 / scale.value;
-                ctx.setLineDash([6 / scale.value, 4 / scale.value]);
+                ctx.lineWidth = 2 / zoom.value;
+                ctx.setLineDash([6 / zoom.value, 4 / zoom.value]);
                 ctx.shadowColor = 'rgba(239,68,68,0.7)'; // rot
-                ctx.shadowBlur = 10 / scale.value;
+                ctx.shadowBlur = 10 / zoom.value;
 
                 for (
                     let y = hoverY.value - stamp.bannerRange;
@@ -587,12 +587,12 @@ function draw() {
 
         // Cursor-Rahmen
         ctx.strokeStyle = '#111827';
-        ctx.lineWidth = 2 / scale.value;
+        ctx.lineWidth = 2 / zoom.value;
         ctx.strokeRect(
-            hoverX.value * TILE + 1 / scale.value,
-            hoverY.value * TILE + 1 / scale.value,
-            TILE - 2 / scale.value,
-            TILE - 2 / scale.value
+            hoverX.value * TILE + 1 / zoom.value,
+            hoverY.value * TILE + 1 / zoom.value,
+            TILE - 2 / zoom.value,
+            TILE - 2 / zoom.value
         );
     }
 }
@@ -622,7 +622,7 @@ function loadFromFile() {
                 applyStampAt(editorPos.x, editorPos.y, false, obj);
             }
             if (Session.view.value) {
-                scale.value = Session.view.value.scale ?? 1;
+                zoom.value = Session.view.value.zoom ?? 1;
                 goTo(Session.view.value.x, Session.view.value.y);
             } else {
                 centerView();
@@ -634,14 +634,14 @@ function loadFromFile() {
         });
 }
 
-// async function share() {
-//     const url = await Session.share();
-//     if (url) {
-//         shareUrl.value = url;
-//     } else {
-//         alert('Sharing failed');
-//     }
-// }
+async function share() {
+    const url = await Session.share();
+    if (url) {
+        shareUrl.value = url;
+    } else {
+        alert('Sharing failed');
+    }
+}
 
 function copyShareLink() {
     if (shareUrl.value) {
@@ -652,11 +652,13 @@ function copyShareLink() {
 /** === Lifecycle === */
 onMounted(async () => {
     await Session.loadDraft();
+    console.log(Session.view.value);
+
     ro = new ResizeObserver(() => resizeCanvas());
     ro.observe(canvas.value!);
     resizeCanvas();
     if (Session.view.value) {
-        scale.value = Session.view.value.scale ?? 1;
+        zoom.value = Session.view.value.zoom ?? 1;
         goTo(Session.view.value.x, Session.view.value.y);
     } else {
         centerView();
@@ -673,13 +675,13 @@ onBeforeUnmount(() => {
 
 //zoom-in and out listener ($emit('zoom-in') and $emit('zoom-out')
 function zoomIn() {
-    scale.value = Math.min(6, scale.value + 0.1);
+  zoom.value = Math.min(6, zoom.value + 0.1);
     updateView();
     draw();
 }
 
 function zoomOut() {
-    scale.value = Math.max(0.2, scale.value - 0.1);
+  zoom.value = Math.max(0.2, zoom.value - 0.1);
     updateView();
     draw();
 }
@@ -687,8 +689,8 @@ function zoomOut() {
 function goTo(x: number, y: number) {
     const c = canvas.value!;
     const editor = toEditorCoords(x, y);
-    offset.value.x = c.clientWidth / 2 - (editor.x + 0.5) * TILE * scale.value;
-    offset.value.y = c.clientHeight / 2 - (editor.y + 0.5) * TILE * scale.value;
+    offset.value.x = c.clientWidth / 2 - (editor.x + 0.5) * TILE * zoom.value;
+    offset.value.y = c.clientHeight / 2 - (editor.y + 0.5) * TILE * zoom.value;
     updateView();
     draw();
 }
